@@ -15,7 +15,7 @@ _SYSTEM_PROMPT_TEMPLATE = """You are a research assistant producing weekly busin
 
 Rules:
 - The very first character of your output MUST be `#` (the report title). Output nothing before it — no preamble, no transition, no "I now have...", no "Let me...".
-- Use web_search at least 4 times with different query angles (production data, prices, export policy, recent news). {language_instruction} Do not exceed 10 web_search calls total. After completing your searches, write the full report in a single response — do not call any tools after that.
+- {search_instruction} After completing your searches, write the full report in a single response — do not call any tools after that.
 - Use fetch_url to read full articles when a snippet is insufficient.
 - Only include facts explicitly stated in search results. Do not fabricate statistics.
 - Every claim must be sourced. Inline-link each statement to its source URL using Markdown: `[statement](<url>)`. List all URLs in the Sources section as well.
@@ -45,6 +45,7 @@ def run_agent(
     topic: str,
     tool_executor: Callable[[str, dict], str],
     tool_schemas: list[dict],
+    search_angles: list[str],
     search_languages: list[tuple[str, float]] | None = None,
 ) -> str:
     """Run the research agent agentic loop.
@@ -64,9 +65,14 @@ def run_agent(
         ValueError: If an unexpected stop_reason is returned by the API.
     """
     langs = search_languages or [("en", 1.0)]
-    system_prompt = _SYSTEM_PROMPT_TEMPLATE.format(
-        language_instruction=_language_instruction(langs)
+    angles_list = "\n".join(f'- "{q}"' for q in search_angles)
+    search_instruction = (
+        "Use ONLY the following search queries, verbatim, in any order. "
+        "Do not invent new query angles. "
+        f"{_language_instruction(langs)} Do not exceed 10 web_search calls total.\n\n"
+        f"Angles:\n{angles_list}"
     )
+    system_prompt = _SYSTEM_PROMPT_TEMPLATE.format(search_instruction=search_instruction)
 
     client = anthropic.Anthropic(api_key=anthropic_api_key)
 

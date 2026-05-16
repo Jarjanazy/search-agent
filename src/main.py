@@ -60,6 +60,7 @@ def main() -> None:
         topic=config.research_topic,
         tool_executor=tool_executor,
         tool_schemas=TOOL_SCHEMAS,
+        search_angles=config.search_angles,
         search_languages=config.search_languages,
     )
 

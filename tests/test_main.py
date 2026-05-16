@@ -62,6 +62,8 @@ def test_main_wires_all_modules(mocker):
         topic="AI safety",
         tool_executor=fake_executor,
         tool_schemas=fake_schemas,
+        search_angles=fake_config.search_angles,
+        search_languages=fake_config.search_languages,
     )
 
     # commit_markdown called once; check key args

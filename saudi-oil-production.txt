@@ -1,0 +1,32 @@
+Saudi Arabia oil production — weekly business intelligence report. Cover all of the following with current data:
+
+PRODUCTION
+- Latest crude oil output (million barrels per day)
+- OPEC+ quota compliance and Saudi actual vs. target production
+- Year-on-year and month-on-month production changes
+- Aramco field-level updates (Ghawar, Khurais, Shaybah, offshore)
+- Upstream capacity utilization and spare capacity estimates
+
+PRICES & TRADE
+- Saudi Official Selling Price (OSP) for Arab Light, Medium, Heavy to Asia, Europe, US
+- Brent and WTI benchmark correlation
+- Active export volumes by destination (Asia, Europe, US, India, China)
+- Tanker loadings and shipping route updates
+
+OPEC+ & POLICY
+- Latest OPEC+ meeting outcomes and Saudi position
+- Voluntary cut announcements or rollbacks
+- Saudi Energy Ministry statements on production targets
+- US-Saudi diplomatic developments affecting energy policy
+
+MARKET & REVENUE
+- Saudi Aramco quarterly production and revenue figures
+- Vision 2030 energy diversification updates
+- Refinery expansion or downstream investment news
+- Natural gas production and domestic energy mix shifts
+
+RISKS & DISRUPTIONS
+- Geopolitical events in the Gulf affecting shipping lanes (Strait of Hormuz)
+- Infrastructure attacks or security incidents
+- Demand-side shocks from major importers (China slowdown, recession risk)
+- Climate or seasonal factors affecting operations

@@ -11,7 +11,6 @@ REQUIRED_VARS = {
     "GITHUB_TOKEN": "test-github-token",
     "GITHUB_REPO": "user/repo",
     "GITHUB_OUTPUT_PATH": "output/research.md",
-    "RESEARCH_TOPIC": "AI safety",
 }
 
 
@@ -19,6 +18,9 @@ def set_required(monkeypatch):
     """Helper: set all required env vars via monkeypatch."""
     for key, value in REQUIRED_VARS.items():
         monkeypatch.setenv(key, value)
+    # Mock file-loading functions so tests are independent of real files in env
+    monkeypatch.setattr("src.config._load_research_topic", lambda: "AI safety")
+    monkeypatch.setattr("src.config._load_search_angles", lambda: ["query1", "query2"])
 
 
 # ---------------------------------------------------------------------------
@@ -41,6 +43,7 @@ def test_load_config_required_fields(monkeypatch):
     assert cfg.github_repo == "user/repo"
     assert cfg.github_output_path == "output/research.md"
     assert cfg.research_topic == "AI safety"
+    assert cfg.search_angles == ["query1", "query2"]
 
 
 # ---------------------------------------------------------------------------

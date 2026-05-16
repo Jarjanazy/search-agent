@@ -1,0 +1,11 @@
+Syrian olive oil — weekly business intelligence report. Cover all of the following with current data:
+
+PRODUCTION
+- Latest production volume estimates (tons of oil, tons of olives pressed)
+- Regional breakdown (Aleppo, Idlib, Hama, Homs, coastal)
+
+PRICES & TRADE
+- Wholesale and retail price per ton or per liter (local and export)
+- Active export destinations and volumes
+- Current export permit status (allowed / restricted / seasonal)
+- Any new trade agreements or buyer relationships

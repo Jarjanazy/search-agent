@@ -29,6 +29,7 @@ class Config:
     claude_model: str
     max_search_results: int
     search_languages: list[tuple[str, float]]
+    search_angles: list[str]
 
 
 def _parse_search_languages(raw: str) -> list[tuple[str, float]]:
@@ -67,6 +68,26 @@ def _parse_search_languages(raw: str) -> list[tuple[str, float]]:
         raise ValueError("SEARCH_LANGUAGES weights must not all be zero")
 
     return [(code, w / total) for code, w in merged.items()]
+
+
+def _load_search_angles() -> list[str]:
+    """Load search angles from file path in SEARCH_ANGLES_FILE env var."""
+    angles_file = os.environ.get("SEARCH_ANGLES_FILE", "").strip()
+    if not angles_file:
+        raise ValueError("Required environment variable 'SEARCH_ANGLES_FILE' is missing or empty.")
+
+    path = Path(angles_file)
+    if not path.is_absolute():
+        path = Path(__file__).resolve().parent.parent / path
+    if not path.exists():
+        raise ValueError(f"SEARCH_ANGLES_FILE path does not exist: {angles_file!r}")
+
+    lines = [line.strip() for line in path.read_text(encoding="utf-8").splitlines()]
+    angles = [line for line in lines if line]
+    if not angles:
+        raise ValueError(f"SEARCH_ANGLES_FILE is empty: {angles_file!r}")
+
+    return angles
 
 
 def _load_research_topic() -> str:
@@ -123,4 +144,5 @@ def load_config() -> Config:
         claude_model=os.environ.get("CLAUDE_MODEL", "claude-sonnet-4-6"),
         max_search_results=int(os.environ.get("MAX_SEARCH_RESULTS", "5")),
         search_languages=_parse_search_languages(os.environ.get("SEARCH_LANGUAGES", "en:1.0")),
+        search_angles=_load_search_angles(),
     )

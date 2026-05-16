@@ -47,6 +47,7 @@ def test_returns_text_on_end_turn(mocker):
         topic="AI safety",
         tool_executor=tool_executor,
         tool_schemas=[],
+        search_angles=["AI safety 2026", "AI regulation news"],
     )
 
     assert result == "# Report\n\nThis is the report."
@@ -77,6 +78,7 @@ def test_calls_tool_on_tool_use_then_end_turn(mocker):
         topic="AI safety",
         tool_executor=tool_executor,
         tool_schemas=[],
+        search_angles=["AI safety 2026", "AI regulation news"],
     )
 
     assert result == "# Final Report"
@@ -118,6 +120,7 @@ def test_multiple_tool_calls_in_one_response(mocker):
         topic="topic",
         tool_executor=tool_executor,
         tool_schemas=[],
+        search_angles=["query1", "query2"],
     )
 
     assert result == "# Final Report"
@@ -157,6 +160,7 @@ def test_raises_runtime_error_after_max_iterations(mocker):
             topic="topic",
             tool_executor=tool_executor,
             tool_schemas=[],
+            search_angles=["query1", "query2"],
         )
 
     assert mock_client.messages.create.call_count == MAX_ITERATIONS
@@ -181,6 +185,7 @@ def test_raises_value_error_on_unexpected_stop_reason(mocker):
             topic="topic",
             tool_executor=mocker.MagicMock(),
             tool_schemas=[],
+            search_angles=["query1", "query2"],
         )
 
 
@@ -203,6 +208,7 @@ def test_returns_text_on_max_tokens(mocker):
         topic="topic",
         tool_executor=mocker.MagicMock(),
         tool_schemas=[],
+        search_angles=["query1", "query2"],
     )
 
     assert result == "# Partial Report\n\nTruncated due to token limit."
@@ -221,6 +227,7 @@ def test_returns_empty_string_on_max_tokens_with_no_text_block(mocker):
         topic="topic",
         tool_executor=mocker.MagicMock(),
         tool_schemas=[],
+        search_angles=["query1", "query2"],
     )
 
     assert result == ""
@@ -259,6 +266,7 @@ def test_tool_executor_exception_returned_as_error_result(mocker):
         topic="topic",
         tool_executor=tool_executor,
         tool_schemas=[],
+        search_angles=["query1", "query2"],
     )
 
     # Agent should not crash; it continues to end_turn and returns the final text
@@ -297,4 +305,5 @@ def test_tool_use_with_no_blocks_raises(mocker):
             topic="topic",
             tool_executor=mocker.MagicMock(),
             tool_schemas=[],
+            search_angles=["query1", "query2"],
         )
