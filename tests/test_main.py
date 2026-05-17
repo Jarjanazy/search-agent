@@ -49,10 +49,12 @@ def test_main_wires_all_modules(mocker):
     # load_config called once with no args
     mock_load_config.assert_called_once_with()
 
-    # make_tool_executor called with brave key and max results
+    # make_tool_executor called with brave key, max results, and date window
     mock_make_tool_executor.assert_called_once_with(
         brave_api_key="brave-key",
         max_results=5,
+        search_start_date=fake_config.search_start_date,
+        search_end_date=fake_config.search_end_date,
     )
 
     # run_agent called with correct kwargs
@@ -64,6 +66,8 @@ def test_main_wires_all_modules(mocker):
         tool_schemas=fake_schemas,
         search_angles=fake_config.search_angles,
         search_languages=fake_config.search_languages,
+        search_start_date=fake_config.search_start_date,
+        search_end_date=fake_config.search_end_date,
     )
 
     # commit_markdown called once; check key args

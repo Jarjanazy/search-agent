@@ -6,6 +6,7 @@ configuration via dependency injection (a Config instance).
 
 import os
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 
 _REQUIRED_VARS = (
@@ -30,6 +31,8 @@ class Config:
     max_search_results: int
     search_languages: list[tuple[str, float]]
     search_angles: list[str]
+    search_start_date: date | None
+    search_end_date: date | None
 
 
 def _parse_search_languages(raw: str) -> list[tuple[str, float]]:
@@ -133,6 +136,18 @@ def load_config() -> Config:
                 f"Required environment variable {var!r} is missing or empty."
             )
 
+    raw_start = os.environ.get("SEARCH_START_DATE", "").strip()
+    raw_end = os.environ.get("SEARCH_END_DATE", "").strip()
+
+    if bool(raw_start) != bool(raw_end):
+        raise ValueError("SEARCH_START_DATE and SEARCH_END_DATE must both be set or both be absent.")
+
+    search_start_date = date.fromisoformat(raw_start) if raw_start else None
+    search_end_date = date.fromisoformat(raw_end) if raw_end else None
+
+    if search_start_date and search_end_date and search_end_date < search_start_date:
+        raise ValueError("SEARCH_END_DATE must not be before SEARCH_START_DATE.")
+
     return Config(
         anthropic_api_key=os.environ["ANTHROPIC_API_KEY"],
         brave_api_key=os.environ["BRAVE_API_KEY"],
@@ -145,4 +160,6 @@ def load_config() -> Config:
         max_search_results=int(os.environ.get("MAX_SEARCH_RESULTS", "5")),
         search_languages=_parse_search_languages(os.environ.get("SEARCH_LANGUAGES", "en:1.0")),
         search_angles=_load_search_angles(),
+        search_start_date=search_start_date,
+        search_end_date=search_end_date,
     )

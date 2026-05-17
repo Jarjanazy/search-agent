@@ -51,6 +51,8 @@ def main() -> None:
     tool_executor = make_tool_executor(
         brave_api_key=config.brave_api_key,
         max_results=config.max_search_results,
+        search_start_date=config.search_start_date,
+        search_end_date=config.search_end_date,
     )
 
     print("Running agent...")
@@ -62,6 +64,8 @@ def main() -> None:
         tool_schemas=TOOL_SCHEMAS,
         search_angles=config.search_angles,
         search_languages=config.search_languages,
+        search_start_date=config.search_start_date,
+        search_end_date=config.search_end_date,
     )
 
     print("Building output markdown...")

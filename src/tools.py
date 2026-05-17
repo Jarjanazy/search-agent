@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 from typing import Callable
 
 import httpx
@@ -32,6 +33,40 @@ TOOL_SCHEMAS = [
         },
     },
     {
+        "name": "search_x",
+        "description": (
+            "Search X (Twitter) for posts, threads, and discussions on a topic. "
+            "Uses Brave Search restricted to x.com. Returns title, URL, and snippet."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "The search query. Do NOT include 'site:x.com' — it is added automatically.",
+                },
+            },
+            "required": ["query"],
+        },
+    },
+    {
+        "name": "search_reddit",
+        "description": (
+            "Search Reddit for posts, threads, and discussions on a topic. "
+            "Uses Brave Search restricted to reddit.com. Returns title, URL, and snippet."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "The search query. Do NOT include 'site:reddit.com' — it is added automatically.",
+                },
+            },
+            "required": ["query"],
+        },
+    },
+    {
         "name": "fetch_url",
         "description": (
             "Fetch the full text content of a URL. "
@@ -54,13 +89,24 @@ TOOL_SCHEMAS = [
 def make_tool_executor(
     brave_api_key: str,
     max_results: int,
+    search_start_date: date | None = None,
+    search_end_date: date | None = None,
 ) -> Callable[[str, dict], str]:
     """Return a tool executor bound to the given Brave API key and result limit."""
+    freshness: str | None = None
+    if search_start_date and search_end_date:
+        freshness = f"{search_start_date}to{search_end_date}"
 
     def execute(tool_name: str, tool_input: dict) -> str:
         if tool_name == "web_search":
             lang = tool_input.get("language", "en")
-            return _web_search(tool_input["query"], brave_api_key, max_results, lang)
+            return _web_search(tool_input["query"], brave_api_key, max_results, lang, freshness)
+        if tool_name == "search_reddit":
+            reddit_query = f"site:reddit.com {tool_input['query']}"
+            return _web_search(reddit_query, brave_api_key, max_results, "en", freshness)
+        if tool_name == "search_x":
+            x_query = f"site:x.com {tool_input['query']}"
+            return _web_search(x_query, brave_api_key, max_results, "en", freshness)
         if tool_name == "fetch_url":
             return _fetch_url(tool_input["url"])
         raise ValueError(f"Unknown tool: {tool_name!r}")
@@ -73,10 +119,13 @@ def make_tool_executor(
 # ---------------------------------------------------------------------------
 
 
-def _web_search(query: str, api_key: str, max_results: int, lang: str = "en") -> str:
+def _web_search(query: str, api_key: str, max_results: int, lang: str = "en", freshness: str | None = None) -> str:
+    params: dict = {"q": query, "count": max_results, "search_lang": lang}
+    if freshness:
+        params["freshness"] = freshness
     response = httpx.get(
         "https://api.search.brave.com/res/v1/web/search",
-        params={"q": query, "count": max_results, "search_lang": lang},
+        params=params,
         headers={
             "X-Subscription-Token": api_key,
             "Accept": "application/json",

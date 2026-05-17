@@ -10,13 +10,15 @@ from src.tools import TOOL_SCHEMAS, make_tool_executor
 # ---------------------------------------------------------------------------
 
 
-def test_tool_schemas_has_exactly_two_entries():
-    assert len(TOOL_SCHEMAS) == 2
+def test_tool_schemas_has_exactly_four_entries():
+    assert len(TOOL_SCHEMAS) == 4
 
 
 def test_tool_schemas_names():
     names = [s["name"] for s in TOOL_SCHEMAS]
     assert "web_search" in names
+    assert "search_x" in names
+    assert "search_reddit" in names
     assert "fetch_url" in names
 
 
@@ -140,7 +142,65 @@ def test_web_search_returns_no_results_message_when_empty(mocker):
 
 
 # ---------------------------------------------------------------------------
-# 3. fetch_url
+# 3. search_x — site:x.com prefix injection
+# ---------------------------------------------------------------------------
+
+
+def test_search_x_prepends_site_prefix(mocker):
+    mock_response = mocker.MagicMock()
+    mock_response.json.return_value = {"web": {"results": []}}
+    mock_get = mocker.patch("httpx.get", return_value=mock_response)
+
+    execute = make_tool_executor(brave_api_key="test-key", max_results=5)
+    execute("search_x", {"query": "olive oil prices"})
+
+    params = mock_get.call_args[1]["params"]
+    assert params["q"] == "site:x.com olive oil prices"
+
+
+def test_search_x_always_uses_english(mocker):
+    mock_response = mocker.MagicMock()
+    mock_response.json.return_value = {"web": {"results": []}}
+    mock_get = mocker.patch("httpx.get", return_value=mock_response)
+
+    execute = make_tool_executor(brave_api_key="test-key", max_results=5)
+    execute("search_x", {"query": "test"})
+
+    params = mock_get.call_args[1]["params"]
+    assert params["search_lang"] == "en"
+
+
+# ---------------------------------------------------------------------------
+# 4. search_reddit — site:reddit.com prefix injection
+# ---------------------------------------------------------------------------
+
+
+def test_search_reddit_prepends_site_prefix(mocker):
+    mock_response = mocker.MagicMock()
+    mock_response.json.return_value = {"web": {"results": []}}
+    mock_get = mocker.patch("httpx.get", return_value=mock_response)
+
+    execute = make_tool_executor(brave_api_key="test-key", max_results=5)
+    execute("search_reddit", {"query": "olive oil prices"})
+
+    params = mock_get.call_args[1]["params"]
+    assert params["q"] == "site:reddit.com olive oil prices"
+
+
+def test_search_reddit_always_uses_english(mocker):
+    mock_response = mocker.MagicMock()
+    mock_response.json.return_value = {"web": {"results": []}}
+    mock_get = mocker.patch("httpx.get", return_value=mock_response)
+
+    execute = make_tool_executor(brave_api_key="test-key", max_results=5)
+    execute("search_reddit", {"query": "test"})
+
+    params = mock_get.call_args[1]["params"]
+    assert params["search_lang"] == "en"
+
+
+# ---------------------------------------------------------------------------
+# 5. fetch_url
 # ---------------------------------------------------------------------------
 
 
