@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.config import Config, load_config
+from src.config import Config, load_config, _MAX_ANGLES, _MAX_TOPIC_LINES
 
 # Minimal set of required env vars for a valid config
 REQUIRED_VARS = {
@@ -58,11 +58,14 @@ def test_default_github_branch(monkeypatch):
     assert cfg.github_branch == "main"
 
 
-def test_default_claude_model(monkeypatch):
+def test_default_model_fields(monkeypatch):
     set_required(monkeypatch)
-    monkeypatch.delenv("CLAUDE_MODEL", raising=False)
+    for var in ("PLANNING_MODEL", "RESEARCH_MODEL", "SYNTHESIS_MODEL"):
+        monkeypatch.delenv(var, raising=False)
     cfg = load_config()
-    assert cfg.claude_model == "claude-sonnet-4-6"
+    assert cfg.planning_model == "claude-sonnet-4-6"
+    assert cfg.research_model == "claude-sonnet-4-6"
+    assert cfg.synthesis_model == "claude-sonnet-4-6"
 
 
 def test_default_max_search_results(monkeypatch):
@@ -84,11 +87,15 @@ def test_override_github_branch(monkeypatch):
     assert cfg.github_branch == "feature/my-branch"
 
 
-def test_override_claude_model(monkeypatch):
+def test_override_model_fields(monkeypatch):
     set_required(monkeypatch)
-    monkeypatch.setenv("CLAUDE_MODEL", "claude-opus-4-5")
+    monkeypatch.setenv("PLANNING_MODEL", "claude-haiku-4-5")
+    monkeypatch.setenv("RESEARCH_MODEL", "claude-haiku-4-5")
+    monkeypatch.setenv("SYNTHESIS_MODEL", "claude-haiku-4-5")
     cfg = load_config()
-    assert cfg.claude_model == "claude-opus-4-5"
+    assert cfg.planning_model == "claude-haiku-4-5"
+    assert cfg.research_model == "claude-haiku-4-5"
+    assert cfg.synthesis_model == "claude-haiku-4-5"
 
 
 def test_override_max_search_results(monkeypatch):
@@ -124,6 +131,56 @@ def test_empty_required_var_raises_value_error(monkeypatch, empty_var):
     monkeypatch.setenv(empty_var, "")
     with pytest.raises(ValueError, match=empty_var):
         load_config()
+
+
+# ---------------------------------------------------------------------------
+# 5. Input file limits
+# ---------------------------------------------------------------------------
+
+
+def test_too_many_angles_raises(monkeypatch):
+    set_required(monkeypatch)
+    monkeypatch.setattr(
+        "src.config._load_search_angles",
+        lambda: [f"query {i}" for i in range(_MAX_ANGLES + 1)],
+    )
+    with pytest.raises(ValueError, match=f"max {_MAX_ANGLES}"):
+        load_config()
+
+
+def test_angles_at_limit_passes(monkeypatch):
+    set_required(monkeypatch)
+    monkeypatch.setattr(
+        "src.config._load_search_angles",
+        lambda: [f"query {i}" for i in range(_MAX_ANGLES)],
+    )
+    cfg = load_config()
+    assert len(cfg.search_angles) == _MAX_ANGLES
+
+
+def test_too_many_topic_lines_raises(monkeypatch):
+    set_required(monkeypatch)
+    long_topic = "\n".join(f"line {i}" for i in range(_MAX_TOPIC_LINES + 1))
+    monkeypatch.setattr("src.config._load_research_topic", lambda: long_topic)
+    with pytest.raises(ValueError, match=f"max {_MAX_TOPIC_LINES}"):
+        load_config()
+
+
+def test_topic_at_limit_passes(monkeypatch):
+    set_required(monkeypatch)
+    topic_at_limit = "\n".join(f"line {i}" for i in range(_MAX_TOPIC_LINES))
+    monkeypatch.setattr("src.config._load_research_topic", lambda: topic_at_limit)
+    cfg = load_config()
+    assert cfg.research_topic == topic_at_limit
+
+
+def test_topic_empty_lines_not_counted(monkeypatch):
+    set_required(monkeypatch)
+    # 49 real lines + many blank lines = still valid
+    topic = "\n\n".join(f"line {i}" for i in range(_MAX_TOPIC_LINES - 1))
+    monkeypatch.setattr("src.config._load_research_topic", lambda: topic)
+    cfg = load_config()
+    assert cfg.research_topic is not None
 
 
 def test_whitespace_only_required_var_raises(monkeypatch):

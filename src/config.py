@@ -9,6 +9,9 @@ from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
+_MAX_ANGLES = 5
+_MAX_TOPIC_LINES = 50
+
 _REQUIRED_VARS = (
     "ANTHROPIC_API_KEY",
     "BRAVE_API_KEY",
@@ -27,7 +30,10 @@ class Config:
     github_output_path: str
     github_branch: str
     research_topic: str
-    claude_model: str
+    planning_model: str
+    research_model: str
+    synthesis_model: str
+    thinking_output_dir: str
     max_search_results: int
     search_languages: list[tuple[str, float]]
     search_angles: list[str]
@@ -122,7 +128,9 @@ def load_config() -> Config:
 
     Optional vars (with defaults):
         GITHUB_BRANCH         -> "main"
-        CLAUDE_MODEL          -> "claude-sonnet-4-6"
+        PLANNING_MODEL        -> "claude-opus-4-7"
+        RESEARCH_MODEL        -> "claude-sonnet-4-6"
+        SYNTHESIS_MODEL       -> "claude-opus-4-7"
         MAX_SEARCH_RESULTS    -> 5
 
     Raises:
@@ -148,6 +156,24 @@ def load_config() -> Config:
     if search_start_date and search_end_date and search_end_date < search_start_date:
         raise ValueError("SEARCH_END_DATE must not be before SEARCH_START_DATE.")
 
+    research_topic = _load_research_topic()
+    search_angles = _load_search_angles()
+
+    topic_lines = [l for l in research_topic.splitlines() if l.strip()]
+    if len(topic_lines) > _MAX_TOPIC_LINES:
+        raise ValueError(
+            f"RESEARCH_TOPIC_FILE has {len(topic_lines)} non-empty lines (max {_MAX_TOPIC_LINES}). "
+            "A long topic file wastes tokens in every phase. Trim it to the essential sections."
+        )
+
+    if len(search_angles) > _MAX_ANGLES:
+        raise ValueError(
+            f"SEARCH_ANGLES_FILE has {len(search_angles)} angles (max {_MAX_ANGLES}). "
+            "Too many angles exceed the researcher's tool call budget "
+            "(10 web_search + 5 search_x + 5 search_reddit). "
+            "Reduce to at most 5 angles."
+        )
+
     return Config(
         anthropic_api_key=os.environ["ANTHROPIC_API_KEY"],
         brave_api_key=os.environ["BRAVE_API_KEY"],
@@ -155,11 +181,14 @@ def load_config() -> Config:
         github_repo=os.environ["GITHUB_REPO"],
         github_output_path=os.environ["GITHUB_OUTPUT_PATH"],
         github_branch=os.environ.get("GITHUB_BRANCH", "main"),
-        research_topic=_load_research_topic(),
-        claude_model=os.environ.get("CLAUDE_MODEL", "claude-sonnet-4-6"),
+        research_topic=research_topic,
+        planning_model=os.environ.get("PLANNING_MODEL", "claude-sonnet-4-6"),
+        research_model=os.environ.get("RESEARCH_MODEL", "claude-sonnet-4-6"),
+        synthesis_model=os.environ.get("SYNTHESIS_MODEL", "claude-sonnet-4-6"),
+        thinking_output_dir=os.environ.get("THINKING_OUTPUT_DIR", "runs"),
         max_search_results=int(os.environ.get("MAX_SEARCH_RESULTS", "5")),
         search_languages=_parse_search_languages(os.environ.get("SEARCH_LANGUAGES", "en:1.0")),
-        search_angles=_load_search_angles(),
+        search_angles=search_angles,
         search_start_date=search_start_date,
         search_end_date=search_end_date,
     )

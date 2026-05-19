@@ -4,7 +4,7 @@ from pathlib import Path
 
 from src.config import load_config
 from src.tools import TOOL_SCHEMAS, make_tool_executor
-from src.agent import run_agent
+from src.pipeline import run_pipeline
 from src.github_client import commit_markdown
 
 FALLBACK_PATH = Path("data/fallback_report.md")
@@ -55,14 +55,17 @@ def main() -> None:
         search_end_date=config.search_end_date,
     )
 
-    print("Running agent...")
-    report = run_agent(
+    print("Running pipeline...")
+    report = run_pipeline(
         anthropic_api_key=config.anthropic_api_key,
-        model=config.claude_model,
+        planning_model=config.planning_model,
+        research_model=config.research_model,
+        synthesis_model=config.synthesis_model,
         topic=config.research_topic,
+        search_angles=config.search_angles,
         tool_executor=tool_executor,
         tool_schemas=TOOL_SCHEMAS,
-        search_angles=config.search_angles,
+        thinking_output_dir=config.thinking_output_dir,
         search_languages=config.search_languages,
         search_start_date=config.search_start_date,
         search_end_date=config.search_end_date,
